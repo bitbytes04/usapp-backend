@@ -1,3 +1,4 @@
+const { sendPasswordResetEmail } = require("firebase/auth/web-extension");
 const { db, auth } = require("../firebase/config");
 const logActivity = require("../utils/logActivity");
 
@@ -101,22 +102,3 @@ exports.addButtonToUserBoard = async (req, res) => {
     }
 };
 
-exports.resetUserPassword = async (req, res) => {
-    const { email, uid, } = req.body;
-
-    try {
-        const doc = await db.collection("Users").doc(uid).get();
-        if (!doc.exists) return res.status(404).send({ message: "User not found" });
-
-        getAuth()
-            .generatePasswordResetLink(email)
-            .then((link) => {
-                return sendCustomPasswordResetEmail(email, doc.data.firstName, link);
-            })
-            .catch((error) => {
-                // Some error occurred.
-            });
-    } catch (error) {
-        res.status(400).send({ error: error.message });
-    }
-}
