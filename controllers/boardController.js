@@ -1,5 +1,13 @@
 const axios = require('axios');
 const env = require('dotenv').config();
+const { Configuration, OpenAiApi } = require('openai');
+
+const configuration = new Configuration({
+    apiKey: process.env.OPENAI_API_KEY,
+
+});
+
+const openai = new OpenAiApi(configuration);
 
 exports.activateTextToSpeech = async (req, res) => {
     const { text } = req.body;
@@ -11,7 +19,7 @@ exports.activateTextToSpeech = async (req, res) => {
             "effectsProfileId": [
                 "small-bluetooth-speaker-class-device"
             ],
-            "pitch": 0,
+            "pitch": 1,
             "speakingRate": 1
         },
         "input": {
@@ -31,5 +39,24 @@ exports.activateTextToSpeech = async (req, res) => {
         console.error('Error:', error.response ? error.response.data : error.message);
         console.log(apiKey)
         return res.status(500).send({ error: 'Failed to activate text-to-speech' });
+    }
+}
+
+exports.buildSentence = async (req, res) => {
+    const { text } = req.body;
+
+    try {
+        const response = await openai.createChatCompletion({
+            model: 'gpt-4.1-mini',
+            messages: [
+                { role: 'system', content: 'You are a communication board that generates full Filipino sentences using Tagalog word sequences from the user' },
+                { role: 'user', content: `${text}` }
+            ]
+        });
+        const message = response.data.choices[0].message.content;
+        res.json({ message });
+    } catch (error) {
+        console.error('Error:', error.response ? error.response.data : error.message);
+        return res.status(500).send({ error: 'Failed to build sentence' });
     }
 }
