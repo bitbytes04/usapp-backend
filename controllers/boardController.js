@@ -1,13 +1,12 @@
 const axios = require('axios');
 const env = require('dotenv').config();
-const { Configuration, OpenAiApi } = require('openai');
+const { OpenAI } = require('openai');
 
-const configuration = new Configuration({
+const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
-
 });
 
-const openai = new OpenAiApi(configuration);
+
 
 exports.activateTextToSpeech = async (req, res) => {
     const { text } = req.body;
@@ -46,14 +45,14 @@ exports.buildSentence = async (req, res) => {
     const { text } = req.body;
 
     try {
-        const response = await openai.createChatCompletion({
+        const response = await openai.chat.completions.create({
             model: 'gpt-4.1-mini',
             messages: [
-                { role: 'system', content: 'You are a communication board that generates full Filipino sentences using Tagalog word sequences from the user' },
+                { role: 'system', content: 'You are a communication board that generates full Filipino sentences using Tagalog word sequences from the user, interpret what the user wants' },
                 { role: 'user', content: `${text}` }
             ]
         });
-        const message = response.data.choices[0].message.content;
+        const message = response.choices[0].message.content;
         res.json({ message });
     } catch (error) {
         console.error('Error:', error.response ? error.response.data : error.message);
