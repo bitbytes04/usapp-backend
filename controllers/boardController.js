@@ -48,7 +48,7 @@ exports.buildSentence = async (req, res) => {
         const response = await openai.chat.completions.create({
             model: 'gpt-4.1-mini',
             messages: [
-                { role: 'system', content: 'You are a communication board that generates full Filipino sentences using Tagalog word sequences from the user, interpret what the user wants' },
+                { role: 'system', content: 'You are a communication board that generates full Filipino sentences using Tagalog word sequences from the user, reply your interpretation of what the user wants or needs' },
                 { role: 'user', content: `${text}` }
             ]
         });
