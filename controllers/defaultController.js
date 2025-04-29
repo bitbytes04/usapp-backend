@@ -50,3 +50,38 @@ exports.addButtonToDefaultBoard = async (req, res) => {
         res.status(500).send({ error: err.message });
     }
 };
+
+exports.getButton = async (req, res) => {
+    const { buttonId } = req.params;
+
+    try {
+        const doc = await db.collection("DefaultButtons").doc(buttonId).get();
+
+        if (!doc.exists) {
+            return res.status(404).send({ error: "Button not found" });
+        }
+
+        res.status(200).send({ id: doc.id, ...doc.data() });
+    } catch (err) {
+        res.status(500).send({ error: err.message });
+    }
+};
+
+exports.getAllButtons = async (req, res) => {
+    try {
+        const snapshot = await db.collection("DefaultButtons").get();
+
+        if (snapshot.empty) {
+            return res.status(404).send({ error: "No buttons found" });
+        }
+
+        const buttons = [];
+        snapshot.forEach(doc => {
+            buttons.push({ id: doc.id, ...doc.data() });
+        });
+
+        res.status(200).send({ buttons });
+    } catch (err) {
+        res.status(500).send({ error: err.message });
+    }
+};

@@ -5,6 +5,8 @@ const controller = require("../controllers/userController");
 router.post("/create", controller.createUser);
 router.get("/:uid", controller.getUser);
 router.get("/:uid/activity-logs", controller.getActivityLogs);
+router.get("/:uid/userboards", controller.getActivityLogs);
+router.post("/:uid/edituser", controller.getActivityLogs);
 
 
 router.post("/:uid/buttons", controller.addUserButton);

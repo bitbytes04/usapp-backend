@@ -30,7 +30,6 @@ exports.createUser = async (req, res) => {
     }
 };
 
-
 exports.getUser = async (req, res) => {
     try {
         const doc = await db.collection("Users").doc(req.params.uid).get();
@@ -98,5 +97,46 @@ exports.addUserBoard = async (req, res) => {
         res.status(201).send({ message: "User board added", boardId: ref.id });
     } catch (err) {
         res.status(500).send({ error: err.message });
+    }
+};
+
+// New function: Get all user boards
+exports.getAllUserBoards = async (req, res) => {
+    try {
+        const snapshot = await db.collection("Users").doc(req.params.uid).collection("UserBoards").get();
+
+        const boards = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        res.send(boards);
+    } catch (err) {
+        res.status(500).send({ error: err.message });
+    }
+};
+
+// New function: Edit user
+exports.editUser = async (req, res) => {
+    const { firstName, lastName, username, email, userType, age, endName, endAge } = req.body;
+
+    try {
+        const userData = {
+            firstName,
+            lastName,
+            username,
+            email,
+            userType,
+            age,
+        };
+
+        // Add endName and endAge if userType is "Guardian"
+        if (userType === "Guardian") {
+            userData.endName = endName;
+            userData.endAge = endAge;
+        }
+
+        await db.collection("Users").doc(req.params.uid).update(userData);
+
+        await logActivity(req.params.uid, "Updated profile");
+        res.status(200).send({ message: "User profile updated" });
+    } catch (error) {
+        res.status(400).send({ error: error.message });
     }
 };
