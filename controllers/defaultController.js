@@ -1,16 +1,27 @@
 const { db } = require("../firebase/config");
 
 exports.addDefaultButton = async (req, res) => {
-    const { buttonName, buttonImagePath, buttonCategory } = req.body;
+    const buttons = req.body.buttons; // Expecting an array of button objects
+
+    // if (!Array.isArray(buttons)) {
+    //     return res.status(400).send({ error: "Invalid input, expected an array of buttons" });
+    // }
 
     try {
-        const ref = await db.collection("DefaultButtons").add({
-            buttonName,
-            buttonImagePath,
-            buttonCategory,
-        });
+        const addedButtons = [];
+        for (const button of buttons) {
+            const { buttonName, buttonImagePath, buttonCategory } = button;
 
-        res.status(201).send({ message: "Default button added", id: ref.id });
+            const ref = await db.collection("DefaultButtons").add({
+                buttonName,
+                buttonImagePath,
+                buttonCategory,
+            });
+
+            addedButtons.push({ id: ref.id, buttonName });
+        }
+
+        res.status(201).send({ message: "Default buttons added", addedButtons });
     } catch (err) {
         res.status(500).send({ error: err.message });
     }

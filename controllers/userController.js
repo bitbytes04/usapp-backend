@@ -3,9 +3,7 @@ const { db, auth } = require("../firebase/config");
 const logActivity = require("../utils/logActivity");
 
 exports.createUser = async (req, res) => {
-    const { uid, firstName, lastName, username, email, userType, age } = req.body;
-
-
+    const { uid, firstName, lastName, username, email, userType, age, endName, endAge } = req.body;
 
     try {
         const userData = {
@@ -17,6 +15,12 @@ exports.createUser = async (req, res) => {
             age,
         };
 
+        // Add endName and endAge if userType is "Guardian"
+        if (userType === "Guardian") {
+            userData.endName = endName;
+            userData.endAge = endAge;
+        }
+
         await db.collection("Users").doc(uid).set(userData);
 
         await logActivity(uid, "Completed profile");
@@ -25,6 +29,7 @@ exports.createUser = async (req, res) => {
         res.status(400).send({ error: error.message });
     }
 };
+
 
 exports.getUser = async (req, res) => {
     try {
@@ -68,12 +73,25 @@ exports.addUserButton = async (req, res) => {
 };
 
 exports.addUserBoard = async (req, res) => {
-    const { boardName, isFavorite } = req.body;
+    const { boardName, isFavorite, buttonIds } = req.body;
 
     try {
+        // Validate button IDs by checking if they exist in the DefaultButtons collection
+        const buttonRefs = await Promise.all(
+            buttonIds.map(async (buttonId) => {
+                const buttonDoc = await db.collection("DefaultButtons").doc(buttonId).get();
+                if (!buttonDoc.exists) {
+                    throw new Error(`Button with ID ${buttonId} does not exist`);
+                }
+                return buttonId;
+            })
+        );
+
+        // Create the user board
         const ref = await db.collection("Users").doc(req.params.uid).collection("UserBoards").add({
             boardName,
             isFavorite,
+            buttonIds: buttonRefs, // Store the validated button IDs
         });
 
         await logActivity(req.params.uid, "Created user board", boardName);
@@ -82,23 +100,3 @@ exports.addUserBoard = async (req, res) => {
         res.status(500).send({ error: err.message });
     }
 };
-
-exports.addButtonToUserBoard = async (req, res) => {
-    const { buttonType, buttonId } = req.body;
-
-    try {
-        const ref = db.collection("Users")
-            .doc(req.params.uid)
-            .collection("UserBoards")
-            .doc(req.params.boardId)
-            .collection("BoardButtonList");
-
-        const added = await ref.add({ buttonType, buttonId });
-
-        await logActivity(req.params.uid, "Added button to board", `Board ID: ${req.params.boardId}`);
-        res.status(201).send({ message: "Button added to board", id: added.id });
-    } catch (err) {
-        res.status(500).send({ error: err.message });
-    }
-};
-
