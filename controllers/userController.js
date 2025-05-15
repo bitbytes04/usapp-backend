@@ -140,3 +140,22 @@ exports.editUser = async (req, res) => {
         res.status(400).send({ error: error.message });
     }
 };
+
+exports.getUserBoardById = async (req, res) => {
+    try {
+        const boardDoc = await db
+            .collection("Users")
+            .doc(req.params.uid)
+            .collection("UserBoards")
+            .doc(req.params.boardId)
+            .get();
+
+        if (!boardDoc.exists) {
+            return res.status(404).send({ message: "User board not found" });
+        }
+
+        res.send({ id: boardDoc.id, ...boardDoc.data() });
+    } catch (err) {
+        res.status(500).send({ error: err.message });
+    }
+};

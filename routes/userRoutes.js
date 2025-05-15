@@ -6,6 +6,7 @@ router.post("/create", controller.createUser);
 router.get("/:uid", controller.getUser);
 router.get("/:uid/activity-logs", controller.getActivityLogs);
 router.get("/:uid/userboards", controller.getAllUserBoards);
+router.get("/:uid/:boardId/getboard", controller.getUserBoardById);
 router.post("/:uid/edituser", controller.editUser);
 
 
