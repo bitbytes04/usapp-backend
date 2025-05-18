@@ -13,6 +13,9 @@ exports.createUser = async (req, res) => {
             email,
             userType,
             age,
+            boardPreference: "right", // default value
+            preferredVoice: "standard male", // default value
+            preferredPitch: "medium", // default value
         };
 
         // Add endName and endAge if userType is "Guardian"
@@ -154,7 +157,22 @@ exports.getUserBoardById = async (req, res) => {
             return res.status(404).send({ message: "User board not found" });
         }
 
-        res.send({ id: boardDoc.id, ...boardDoc.data() });
+        const boardData = boardDoc.data();
+        const buttonIds = boardData.buttonIds || [];
+
+        // Fetch button data for each buttonId
+        const buttonPromises = buttonIds.map(async (buttonId) => {
+            const buttonDoc = await db.collection("DefaultButtons").doc(buttonId).get();
+            if (buttonDoc.exists) {
+                return { id: buttonDoc.id, ...buttonDoc.data() };
+            } else {
+                return null;
+            }
+        });
+
+        const buttons = (await Promise.all(buttonPromises)).filter(Boolean);
+
+        res.send({ id: boardDoc.id, ...boardData, buttons });
     } catch (err) {
         res.status(500).send({ error: err.message });
     }
