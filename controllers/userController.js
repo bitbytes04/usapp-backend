@@ -115,34 +115,7 @@ exports.getAllUserBoards = async (req, res) => {
     }
 };
 
-// New function: Edit user
-exports.editUser = async (req, res) => {
-    const { firstName, lastName, username, email, userType, age, endName, endAge } = req.body;
 
-    try {
-        const userData = {
-            firstName,
-            lastName,
-            username,
-            email,
-            userType,
-            age,
-        };
-
-        // Add endName and endAge if userType is "Guardian"
-        if (userType === "Guardian") {
-            userData.endName = endName;
-            userData.endAge = endAge;
-        }
-
-        await db.collection("Users").doc(req.params.uid).update(userData);
-
-        await logActivity(req.params.uid, "Updated profile");
-        res.status(200).send({ message: "User profile updated" });
-    } catch (error) {
-        res.status(400).send({ error: error.message });
-    }
-};
 
 exports.getUserBoardById = async (req, res) => {
     try {
@@ -160,14 +133,24 @@ exports.getUserBoardById = async (req, res) => {
         const boardData = boardDoc.data();
         const buttonIds = boardData.buttonIds || [];
 
-        // Fetch button data for each buttonId
+        // Fetch button data for each buttonId from DefaultButtons and UserButtons
         const buttonPromises = buttonIds.map(async (buttonId) => {
-            const buttonDoc = await db.collection("DefaultButtons").doc(buttonId).get();
+            // Try DefaultButtons first
+            let buttonDoc = await db.collection("DefaultButtons").doc(buttonId).get();
             if (buttonDoc.exists) {
-                return { id: buttonDoc.id, ...buttonDoc.data() };
-            } else {
-                return null;
+                return { id: buttonDoc.id, ...buttonDoc.data(), source: "DefaultButtons" };
             }
+            // If not found, try UserButtons
+            buttonDoc = await db
+                .collection("Users")
+                .doc(req.params.uid)
+                .collection("UserButtons")
+                .doc(buttonId)
+                .get();
+            if (buttonDoc.exists) {
+                return { id: buttonDoc.id, ...buttonDoc.data(), source: "UserButtons" };
+            }
+            return null;
         });
 
         const buttons = (await Promise.all(buttonPromises)).filter(Boolean);
@@ -175,5 +158,118 @@ exports.getUserBoardById = async (req, res) => {
         res.send({ id: boardDoc.id, ...boardData, buttons });
     } catch (err) {
         res.status(500).send({ error: err.message });
+    }
+};
+
+exports.deleteUserBoard = async (req, res) => {
+    try {
+        await db
+            .collection("Users")
+            .doc(req.params.uid)
+            .collection("UserBoards")
+            .doc(req.params.boardId)
+            .delete();
+
+        await logActivity(req.params.uid, "Deleted user board");
+        res.status(200).send({ message: "User board deleted" });
+    } catch (err) {
+        res.status(500).send({ error: err.message });
+    }
+};
+
+exports.deleteUserButton = async (req, res) => {
+    try {
+        await db
+            .collection("Users")
+            .doc(req.params.uid)
+            .collection("UserButtons")
+            .doc(req.params.buttonId)
+            .delete();
+
+        await logActivity(req.params.uid, "Deleted user button");
+        res.status(200).send({ message: "User button deleted" });
+    } catch (err) {
+        res.status(500).send({ error: err.message });
+    }
+};
+exports.editUser = async (req, res) => {
+    const {
+        firstName,
+        lastName,
+        username,
+        email,
+        userType,
+        age,
+        endName,
+        endAge,
+        boardPreference,
+        preferredVoice,
+        preferredPitch
+    } = req.body;
+
+    try {
+        const userData = {
+            firstName,
+            lastName,
+            username,
+            email,
+            userType,
+            age,
+            boardPreference,
+            preferredVoice,
+            preferredPitch,
+        };
+
+        if (userType === "Guardian") {
+            userData.endName = endName;
+            userData.endAge = endAge;
+        }
+
+        await db.collection("Users").doc(req.params.uid).update(userData);
+
+        await logActivity(req.params.uid, "Updated profile");
+        res.status(200).send({ message: "User profile updated" });
+    } catch (error) {
+        res.status(400).send({ error: error.message });
+    }
+};
+
+exports.editUserBoard = async (req, res) => {
+    const { boardName, isFavorite, buttonIds } = req.body;
+
+    try {
+        // Validate button IDs by checking if they exist in DefaultButtons or UserButtons
+        const validatedButtonIds = await Promise.all(
+            buttonIds.map(async (buttonId) => {
+                // Check DefaultButtons
+                let buttonDoc = await db.collection("DefaultButtons").doc(buttonId).get();
+                if (buttonDoc.exists) return buttonId;
+                // Check UserButtons
+                buttonDoc = await db
+                    .collection("Users")
+                    .doc(req.params.uid)
+                    .collection("UserButtons")
+                    .doc(buttonId)
+                    .get();
+                if (buttonDoc.exists) return buttonId;
+                throw new Error(`Button with ID ${buttonId} does not exist`);
+            })
+        );
+
+        await db
+            .collection("Users")
+            .doc(req.params.uid)
+            .collection("UserBoards")
+            .doc(req.params.boardId)
+            .update({
+                boardName,
+                isFavorite,
+                buttonIds: validatedButtonIds,
+            });
+
+        await logActivity(req.params.uid, "Edited user board", boardName);
+        res.status(200).send({ message: "User board updated" });
+    } catch (err) {
+        res.status(400).send({ error: err.message });
     }
 };
