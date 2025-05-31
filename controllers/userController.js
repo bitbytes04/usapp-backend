@@ -14,8 +14,8 @@ exports.createUser = async (req, res) => {
             userType,
             age,
             boardPreference: "right", // default value
-            preferredVoice: "standard male", // default value
-            preferredPitch: "medium", // default value
+            preferredVoice: 0, // default value
+            preferredPitch: 1, // default value
         };
 
         // Add endName and endAge if userType is "Guardian"
