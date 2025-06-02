@@ -1,5 +1,5 @@
-const { sendPasswordResetEmail } = require("firebase/auth/web-extension");
-const { db, auth } = require("../firebase/config");
+
+const { db, auth, storage } = require("../firebase/config");
 const logActivity = require("../utils/logActivity");
 
 exports.createUser = async (req, res) => {
@@ -178,6 +178,29 @@ exports.deleteUserBoard = async (req, res) => {
 };
 
 exports.deleteUserButton = async (req, res) => {
+    try {
+        const buttonDoc = await db
+            .collection("Users")
+            .doc(req.params.uid)
+            .collection("UserButtons")
+            .doc(req.params.buttonId)
+            .get();
+
+        if (buttonDoc.exists) {
+            const buttonData = buttonDoc.data();
+            if (buttonData.buttonImagePath) {
+                // Extract storage path from download URL
+                const url = new URL(buttonData.buttonImagePath);
+                const pathMatch = url.pathname.match(/\/o\/(.+?)$/);
+                if (pathMatch && pathMatch[1]) {
+                    const storagePath = decodeURIComponent(pathMatch[1]);
+                    await storage.bucket().file(storagePath).delete().catch(() => { });
+                }
+            }
+        }
+    } catch (error) {
+
+    }
     try {
         await db
             .collection("Users")
