@@ -273,3 +273,18 @@ exports.editUserBoard = async (req, res) => {
         res.status(400).send({ error: err.message });
     }
 };
+
+exports.getUserButtons = async (req, res) => {
+    try {
+        const snapshot = await db
+            .collection("Users")
+            .doc(req.params.uid)
+            .collection("UserButtons")
+            .get();
+
+        const buttons = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        res.send(buttons);
+    } catch (err) {
+        res.status(500).send({ error: err.message });
+    }
+};

@@ -13,6 +13,7 @@ router.post("/:uid/addbutton", controller.addUserButton);
 router.post("/:uid/:boardId/deletebutton", controller.deleteUserButton);
 router.post("/:uid/:boardId/deleteboard", controller.deleteUserBoard);
 router.post("/:uid/boards", controller.addUserBoard);
+router.get("/:uid/userbuttons", controller.getUserButtons);
 
 
 module.exports = router;
