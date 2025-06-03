@@ -4,7 +4,7 @@ const serviceAccount = require("./firebaseServiceAccount.json");
 if (!admin.apps.length) {
     admin.initializeApp({
         credential: admin.credential.cert(serviceAccount),
-        storageBucket: 'default-bucket'
+        storageBucket: 'usapp-b776a.firebasestorage.app'
     });
 }
 
