@@ -81,11 +81,18 @@ exports.addUserBoard = async (req, res) => {
         // Validate button IDs by checking if they exist in the DefaultButtons collection
         const buttonRefs = await Promise.all(
             buttonIds.map(async (buttonId) => {
-                const buttonDoc = await db.collection("DefaultButtons").doc(buttonId).get();
-                if (!buttonDoc.exists) {
-                    throw new Error(`Button with ID ${buttonId} does not exist`);
-                }
-                return buttonId;
+                // Check DefaultButtons
+                let buttonDoc = await db.collection("DefaultButtons").doc(buttonId).get();
+                if (buttonDoc.exists) return buttonId;
+                // Check UserButtons
+                buttonDoc = await db
+                    .collection("Users")
+                    .doc(req.params.uid)
+                    .collection("UserButtons")
+                    .doc(buttonId)
+                    .get();
+                if (buttonDoc.exists) return buttonId;
+                throw new Error(`Button with ID ${buttonId} does not exist`);
             })
         );
 
