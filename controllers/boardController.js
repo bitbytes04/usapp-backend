@@ -18,7 +18,7 @@ exports.activateTextToSpeech = async (req, res) => {
             "effectsProfileId": [
                 "small-bluetooth-speaker-class-device"
             ],
-            "pitch": (0.8 + (pitch * 0.5) + (voice == 2 ? 0.3 : 0)),
+            "pitch": (0.8 + (pitch * 5) + (voice == 2 ? 50 : 0)),
             "speakingRate": 1
         },
         "input": {
@@ -26,7 +26,7 @@ exports.activateTextToSpeech = async (req, res) => {
         },
         "voice": {
             "languageCode": "fil-PH",
-            "name": (voice ? (voice == 1 ? "fil-PH-Standard-A" : (voice == 2 ? "fil-PH-Standard-C" : "fil-PH-Standard-D")) : "fil-PH-Standard-D")
+            "name": (voice ? (voice == 1 ? "fil-PH-Standard-A" : (voice == 2 ? "fil-PH-Standard-B" : "fil-PH-Standard-D")) : "fil-PH-Standard-D")
         }
     }
 

@@ -170,15 +170,27 @@ exports.getUserBoardById = async (req, res) => {
 
 exports.deleteUserBoard = async (req, res) => {
     try {
-        await db
-            .collection("Users")
-            .doc(req.params.uid)
-            .collection("UserBoards")
-            .doc(req.params.boardId)
-            .delete();
+        const { uid, boardId } = req.params;
+        if (!uid || !boardId) {
+            return res.status(400).send({ error: "Missing uid or boardId parameter" });
+        }
 
-        await logActivity(req.params.uid, "Deleted user board");
-        res.status(200).send({ message: "User board deleted" });
+        const boardRef = db
+            .collection("Users")
+            .doc(uid)
+            .collection("UserBoards")
+            .doc(boardId);
+
+        const boardDoc = await boardRef.get();
+        if (!boardDoc.exists) {
+            return res.status(404).send({ message: "User board not found" });
+        }
+
+        const res = await boardRef.delete();
+
+
+        await logActivity(uid, "Deleted user board");
+        res.status(200).send({ res });
     } catch (err) {
         res.status(500).send({ error: err.message });
     }
