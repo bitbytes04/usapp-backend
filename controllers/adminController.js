@@ -90,16 +90,32 @@ const getAllUsers = async (req, res) => {
     try {
         let users = [];
         let nextPageToken;
+        const userUids = new Set();
+
+        // Get all UIDs from Users and SLPUsers collections
+        const [usersSnap, slpUsersSnap] = await Promise.all([
+            db.collection('Users').get(),
+            db.collection('SLPUsers').get()
+        ]);
+        usersSnap.forEach(doc => userUids.add(doc.id));
+        slpUsersSnap.forEach(doc => userUids.add(doc.id));
+
+        // List all auth users and filter by UIDs present in Firestore
         do {
             const listUsersResult = await auth.listUsers(1000, nextPageToken);
-            users = users.concat(listUsersResult.users.map(user => ({
-                uid: user.uid,
-                email: user.email,
-                displayName: user.displayName,
-                customClaims: user.customClaims || {},
-            })));
+            users = users.concat(
+                listUsersResult.users
+                    .filter(user => userUids.has(user.uid))
+                    .map(user => ({
+                        uid: user.uid,
+                        email: user.email,
+                        displayName: user.displayName,
+                        customClaims: user.customClaims || {},
+                    }))
+            );
             nextPageToken = listUsersResult.pageToken;
         } while (nextPageToken);
+
         res.status(200).json({ success: true, users });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
