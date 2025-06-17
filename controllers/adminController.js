@@ -8,7 +8,7 @@ const { db, auth, storage } = require("../firebase/config");
  */
 const getActivityLogs = async (req, res) => {
     try {
-        const logsSnapshot = await db.collection('ActivityLogs').orderBy('timestamp', 'details').get();
+        const logsSnapshot = await db.collection('ActivityLogs').orderBy('timestamp', 'desc').get();
         const logs = logsSnapshot.docs.map(doc => ({
             id: doc.id,
             ...doc.data()
