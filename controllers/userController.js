@@ -75,7 +75,7 @@ exports.addUserButton = async (req, res) => {
 };
 
 exports.addUserBoard = async (req, res) => {
-    const { boardName, isFavorite, buttonIds } = req.body;
+    const { boardName, isFavorite, buttonIds, boardCategory } = req.body;
 
     try {
         // Validate button IDs by checking if they exist in DefaultButtons or UserButtons
@@ -100,7 +100,8 @@ exports.addUserBoard = async (req, res) => {
         const ref = await db.collection("Users").doc(req.params.uid).collection("UserBoards").add({
             boardName,
             isFavorite,
-            buttonIds: buttonRefs, // Store the validated button IDs
+            buttonIds: buttonRefs,
+            boardCategory: boardCategory // Store the validated button IDs
         });
 
         await logActivity(req.params.uid, "Created user board", boardName);
