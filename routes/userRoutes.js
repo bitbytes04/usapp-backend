@@ -14,6 +14,7 @@ router.post("/:uid/:boardId/deletebutton", controller.deleteUserButton);
 router.post("/:uid/:boardId/deleteboard", controller.deleteUserBoard);
 router.post("/:uid/boards", controller.addUserBoard);
 router.get("/:uid/userbuttons", controller.getUserButtons);
-
+router.post("/:uid/log-screen-time", controller.logScreenTime);
+router.post("/:uid/:boardId/log-board-usage", controller.logBoardUsage);
 
 module.exports = router;

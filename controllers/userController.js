@@ -330,3 +330,83 @@ exports.getUserButtons = async (req, res) => {
         res.status(500).send({ error: err.message });
     }
 };
+
+exports.logScreenTime = async (req, res) => {
+    const { uid } = req.params;
+    const { duration, activityType, timestamp } = req.body;
+
+    if (!duration || !activityType) {
+        return res.status(400).send({ error: "Missing duration or activityType in request body" });
+    }
+
+    try {
+        await db.collection("ScreenTimeLogs").add({
+            userId: uid,
+            duration,
+            activityType,
+            timestamp: timestamp || new Date().toISOString(),
+        });
+
+        await logActivity(uid, "Logged screen time", `${activityType}: ${duration}ms`);
+        res.status(201).send({ message: "Screen time logged" });
+    } catch (err) {
+        res.status(500).send({ error: err.message });
+    }
+};
+
+exports.logBoardUsage = async (req, res) => {
+    const { uid, boardId } = req.params;
+    const { buttonPresses } = req.body; // { buttonId: count, ... }
+
+    if (!uid || !boardId || !buttonPresses || typeof buttonPresses !== "object") {
+        return res.status(400).send({ error: "Missing uid, boardId, or buttonPresses in request" });
+    }
+
+    try {
+        // Create a new board log entry
+        const boardLogRef = await db.collection("BoardLogs").add({
+            userId: uid,
+            boardId,
+            timestamp: new Date().toISOString(),
+        });
+
+        // Add button press counts as a subcollection
+        const buttonPressEntries = Object.entries(buttonPresses);
+        await Promise.all(
+            buttonPressEntries.map(([buttonId, count]) =>
+                boardLogRef.collection("ButtonPresses").doc(buttonId).set({
+                    buttonId,
+                    count,
+                })
+            )
+        );
+
+        await logActivity(uid, "Logged board usage", `Board: ${boardId}`);
+        res.status(201).send({ message: "Board usage logged", logId: boardLogRef.id });
+    } catch (err) {
+        res.status(500).send({ error: err.message });
+    }
+};
+
+exports.submitUserFeedback = async (req, res) => {
+    const { uid } = req.params;
+    const { feedback, rating } = req.body;
+
+    if (!feedback || typeof feedback !== "string") {
+        return res.status(400).send({ error: "Feedback is required and must be a string" });
+    }
+
+    try {
+        await db.collection("UserFeedbacks").add({
+            userId: uid,
+            feedback,
+            rating: typeof rating === "number" ? rating : null,
+            timestamp: new Date().toISOString(),
+        });
+
+        await logActivity(uid, "Submitted feedback");
+        res.status(201).send({ message: "Feedback submitted" });
+    } catch (err) {
+        res.status(500).send({ error: err.message });
+    }
+};

@@ -10,6 +10,7 @@ if (!admin.apps.length) {
 
 const db = admin.firestore();
 const storage = admin.storage().bucket();
+const auth = admin.auth();
 
 
-module.exports = { admin, db, storage };
+module.exports = { admin, db, storage, auth };
