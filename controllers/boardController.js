@@ -42,13 +42,13 @@ exports.activateTextToSpeech = async (req, res) => {
 }
 
 exports.buildSentence = async (req, res) => {
-    const { text } = req.body;
+    const { text, emotion } = req.body;
 
     try {
         const response = await openai.chat.completions.create({
             model: 'gpt-4.1-mini',
             messages: [
-                { role: 'system', content: 'You are a communication board that generates full Filipino sentences using Tagalog word sequences from the user, you are being used by the user to communicate, reply like the following user profile (child, 12, minimally-verbal, student)' },
+                { role: 'system', content: `You are a communication board that generates full Filipino sentences using Tagalog word sequences from the user, you are being used by the user to communicate, reply like the following user profile (child, 12, minimally-verbal, student) with the following emotion:${emotion ? emotion : "neutral"} ` },
                 { role: 'user', content: `${text}` }
             ]
         });
