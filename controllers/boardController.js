@@ -9,7 +9,7 @@ const openai = new OpenAI({
 
 
 exports.activateTextToSpeech = async (req, res) => {
-    const { text, pitch, voice } = req.body;
+    const { text, pitch, voice, speed } = req.body;
     const apiKey = process.env.GOOGLE_API_KEY;
     const url = `https://texttospeech.googleapis.com/v1/text:synthesize?key=${apiKey}`;
     const payload = {
@@ -19,7 +19,7 @@ exports.activateTextToSpeech = async (req, res) => {
                 "small-bluetooth-speaker-class-device"
             ],
             "pitch": (0.8 + (pitch * 5) + (voice == 2 ? 50 : 0)),
-            "speakingRate": 1
+            "speakingRate": (speed ? (1 + (speed * 0.5)) : 1)
         },
         "input": {
             "text": text

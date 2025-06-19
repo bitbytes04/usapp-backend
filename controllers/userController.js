@@ -451,6 +451,7 @@ exports.submitUserFeedback = async (req, res) => {
 
 
         res.status(201).send({ message: "Feedback submitted" });
+        await logActivity(uid, "Submitted user feedback", feedback);
     } catch (err) {
         res.status(500).send({ error: err.message });
     }

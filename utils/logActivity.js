@@ -27,4 +27,4 @@ const logBoardActivity = async (userId, boardName, buttonNames = []) => {
 };
 
 
-module.exports = logActivity, logBoardActivity;
+module.exports = { logActivity, logBoardActivity };
