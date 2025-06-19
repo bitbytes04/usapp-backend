@@ -92,28 +92,58 @@ const createSpeechPathologist = async (req, res) => {
  */
 const getAllUsers = async (req, res) => {
     try {
-        // Get all users from Users and SLPUsers collections
-        const [usersSnap, slpUsersSnap] = await Promise.all([
+        // Get all users from Users, SLPUsers, DisabledUsers, and DisabledSLPUsers collections
+        const [
+            usersSnap,
+            slpUsersSnap,
+            disabledUsersSnap,
+            disabledSLPUsersSnap
+        ] = await Promise.all([
             db.collection('Users').get(),
-            db.collection('SLPUsers').get()
+            db.collection('SLPUsers').get(),
+            db.collection('DisabledUsers').get(),
+            db.collection('DisabledSLPUsers').get()
         ]);
 
-        // Map Users collection
+        // Map active Users collection
         const users = usersSnap.docs.map(doc => ({
             uid: doc.id,
             ...doc.data(),
-            role: 'user'
+            role: 'user',
+            status: 'active'
         }));
 
-        // Map SLPUsers collection
+        // Map active SLPUsers collection
         const slpUsers = slpUsersSnap.docs.map(doc => ({
             uid: doc.id,
             ...doc.data(),
-            role: 'slp'
+            role: 'slp',
+            status: 'active'
         }));
 
-        // Combine both arrays
-        const allUsers = [...users, ...slpUsers];
+        // Map DisabledUsers collection
+        const disabledUsers = disabledUsersSnap.docs.map(doc => ({
+            uid: doc.id,
+            ...doc.data(),
+            role: 'user',
+            status: 'disabled'
+        }));
+
+        // Map DisabledSLPUsers collection
+        const disabledSLPUsers = disabledSLPUsersSnap.docs.map(doc => ({
+            uid: doc.id,
+            ...doc.data(),
+            role: 'slp',
+            status: 'disabled'
+        }));
+
+        // Combine all arrays
+        const allUsers = [
+            ...users,
+            ...slpUsers,
+            ...disabledUsers,
+            ...disabledSLPUsers
+        ];
 
         res.status(200).json({ success: true, users: allUsers });
     } catch (error) {
@@ -126,12 +156,26 @@ const getAllUsers = async (req, res) => {
  */
 const getAllSLPUsers = async (req, res) => {
     try {
+        // Fetch active SLP users
         const slpUsersSnapshot = await db.collection('SLPUsers').get();
         const slpUsers = slpUsersSnapshot.docs.map(doc => ({
             uid: doc.id,
-            ...doc.data()
+            ...doc.data(),
+            status: 'active'
         }));
-        res.status(200).json({ success: true, users: slpUsers });
+
+        // Fetch disabled SLP users
+        const disabledSLPUsersSnapshot = await db.collection('DisabledSLPUsers').get();
+        const disabledSLPUsers = disabledSLPUsersSnapshot.docs.map(doc => ({
+            uid: doc.id,
+            ...doc.data(),
+            status: 'disabled'
+        }));
+
+        // Combine both arrays
+        const allSLPUsers = [...slpUsers, ...disabledSLPUsers];
+
+        res.status(200).json({ success: true, users: allSLPUsers });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
