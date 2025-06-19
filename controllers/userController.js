@@ -157,7 +157,7 @@ exports.postUserFeedback = async (req, res) => {
             timestamp: new Date().toISOString(),
         });
 
-        await logActivity(uid, "Posted user feedback");
+
         res.status(201).send({ message: "User feedback posted" });
     } catch (err) {
         res.status(500).send({ error: err.message });
@@ -449,7 +449,7 @@ exports.submitUserFeedback = async (req, res) => {
             timestamp: new Date().toISOString(),
         });
 
-        await logActivity(uid, "Submitted feedback");
+
         res.status(201).send({ message: "Feedback submitted" });
     } catch (err) {
         res.status(500).send({ error: err.message });
