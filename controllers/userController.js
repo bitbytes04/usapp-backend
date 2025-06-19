@@ -1,6 +1,7 @@
 
 const { db, auth, storage } = require("../firebase/config");
-const logActivity = require("../utils/logActivity");
+const { logActivity, logBoardActivity } = require("../utils/logActivity");
+
 
 exports.createUser = async (req, res) => {
     const { uid, firstName, lastName, username, email, userType, age, endName, endAge } = req.body;
@@ -98,6 +99,22 @@ exports.addUserBoard = async (req, res) => {
             })
         );
 
+        // Get button names for logging
+        const buttonNames = await Promise.all(
+            buttonRefs.map(async (buttonId) => {
+                let buttonDoc = await db.collection("DefaultButtons").doc(buttonId).get();
+                if (buttonDoc.exists) return buttonDoc.data().buttonName;
+                buttonDoc = await db
+                    .collection("Users")
+                    .doc(req.params.uid)
+                    .collection("UserButtons")
+                    .doc(buttonId)
+                    .get();
+                if (buttonDoc.exists) return buttonDoc.data().buttonName;
+                return null;
+            })
+        );
+
         // Create the user board
         const ref = await db.collection("Users").doc(req.params.uid).collection("UserBoards").add({
             boardName,
@@ -107,6 +124,7 @@ exports.addUserBoard = async (req, res) => {
         });
 
         await logActivity(req.params.uid, "Created user board", boardName);
+        await logBoardActivity(req.params.uid, boardName, buttonNames.filter(Boolean));
         res.status(201).send({ message: "User board added", boardId: ref.id });
     } catch (err) {
         res.status(500).send({ error: err.message });

@@ -13,4 +13,18 @@ const logActivity = async (userId, action, details = "") => {
     }
 };
 
-module.exports = logActivity;
+const logBoardActivity = async (userId, boardName, buttonNames = []) => {
+    try {
+        await db.collection("BoardActivityLogs").add({
+            userId,
+            boardName,
+            buttonNames,
+            timestamp: new Date(),
+        });
+    } catch (error) {
+        console.error("Board Activity Log Error:", error.message);
+    }
+};
+
+
+module.exports = logActivity, logBoardActivity;

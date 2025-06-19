@@ -176,26 +176,48 @@ const summarizeUserFeedback = async (req, res) => {
 const disableUser = async (req, res) => {
     const { uid } = req.params;
     try {
-        // Get user data from Users collection
+        // Try to get user from Users collection
         const userDoc = await db.collection('Users').doc(uid).get();
-        if (!userDoc.exists) {
-            return res.status(404).json({ success: false, message: 'User not found' });
+        if (userDoc.exists) {
+            const userData = userDoc.data();
+
+            // Add user data to DisabledUsers collection
+            await db.collection('DisabledUsers').doc(uid).set({
+                ...userData,
+                disabledAt: new Date()
+            });
+
+            // Delete user from Users collection
+            await db.collection('Users').doc(uid).delete();
+
+            // Disable user in Firebase Authentication
+            await auth.updateUser(uid, { disabled: true });
+
+            return res.status(200).json({ success: true, message: 'User disabled successfully' });
         }
-        const userData = userDoc.data();
 
-        // Add user data to DisabledUsers collection
-        await db.collection('DisabledUsers').doc(uid).set({
-            ...userData,
-            disabledAt: new Date()
-        });
+        // If not found in Users, check SLPUsers
+        const slpUserDoc = await db.collection('SLPUsers').doc(uid).get();
+        if (slpUserDoc.exists) {
+            const slpUserData = slpUserDoc.data();
 
-        // Delete user from Users collection
-        await db.collection('Users').doc(uid).delete();
+            // Add SLP user data to DisabledSLPUsers collection
+            await db.collection('DisabledSLPUsers').doc(uid).set({
+                ...slpUserData,
+                disabledAt: new Date()
+            });
 
-        // Disable user in Firebase Authentication
-        await auth.updateUser(uid, { disabled: true });
+            // Delete user from SLPUsers collection
+            await db.collection('SLPUsers').doc(uid).delete();
 
-        res.status(200).json({ success: true, message: 'User disabled successfully' });
+            // Disable user in Firebase Authentication
+            await auth.updateUser(uid, { disabled: true });
+
+            return res.status(200).json({ success: true, message: 'SLP user disabled successfully' });
+        }
+
+        // Not found in either collection
+        return res.status(404).json({ success: false, message: 'User not found' });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
@@ -206,26 +228,48 @@ const disableUser = async (req, res) => {
 const enableUser = async (req, res) => {
     const { uid } = req.params;
     try {
-        // Get user data from DisabledUsers collection
+        // Try to get user data from DisabledUsers collection
         const disabledUserDoc = await db.collection('DisabledUsers').doc(uid).get();
-        if (!disabledUserDoc.exists) {
-            return res.status(404).json({ success: false, message: 'Disabled user not found' });
+        if (disabledUserDoc.exists) {
+            const userData = disabledUserDoc.data();
+
+            // Add user data back to Users collection
+            await db.collection('Users').doc(uid).set({
+                ...userData,
+                enabledAt: new Date()
+            });
+
+            // Delete user from DisabledUsers collection
+            await db.collection('DisabledUsers').doc(uid).delete();
+
+            // Enable user in Firebase Authentication
+            await auth.updateUser(uid, { disabled: false });
+
+            return res.status(200).json({ success: true, message: 'User enabled successfully' });
         }
-        const userData = disabledUserDoc.data();
 
-        // Add user data back to Users collection
-        await db.collection('Users').doc(uid).set({
-            ...userData,
-            enabledAt: new Date()
-        });
+        // If not found in DisabledUsers, check DisabledSLPUsers
+        const disabledSLPUserDoc = await db.collection('DisabledSLPUsers').doc(uid).get();
+        if (disabledSLPUserDoc.exists) {
+            const slpUserData = disabledSLPUserDoc.data();
 
-        // Delete user from DisabledUsers collection
-        await db.collection('DisabledUsers').doc(uid).delete();
+            // Add SLP user data back to SLPUsers collection
+            await db.collection('SLPUsers').doc(uid).set({
+                ...slpUserData,
+                enabledAt: new Date()
+            });
 
-        // Enable user in Firebase Authentication
-        await auth.updateUser(uid, { disabled: false });
+            // Delete user from DisabledSLPUsers collection
+            await db.collection('DisabledSLPUsers').doc(uid).delete();
 
-        res.status(200).json({ success: true, message: 'User enabled successfully' });
+            // Enable user in Firebase Authentication
+            await auth.updateUser(uid, { disabled: false });
+
+            return res.status(200).json({ success: true, message: 'SLP user enabled successfully' });
+        }
+
+        // Not found in either collection
+        return res.status(404).json({ success: false, message: 'Disabled user not found' });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }

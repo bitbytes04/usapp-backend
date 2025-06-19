@@ -111,6 +111,7 @@ exports.postLinkRequest = async (req, res) => {
         const slpDoc = await db.collection("SLPUsers").doc(uid).get();
         const slpData = slpDoc.data();
         const slpDisplayName = slpData && slpData.displayName ? slpData.displayName : "";
+        const slpClinicName = slpData && slpData.clinicName ? slpData.clinicName : "";
 
         // Add a link request to the target user's LinkRequests subcollection
         await db.collection("Users")
@@ -119,6 +120,7 @@ exports.postLinkRequest = async (req, res) => {
             .add({
                 fromUserId: uid,
                 fromDisplayName: slpDisplayName,
+                fromClinicName: slpClinicName,
                 requestedAt: new Date(),
                 status: "pending"
             });
