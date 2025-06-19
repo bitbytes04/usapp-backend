@@ -15,6 +15,7 @@ router.post("/login", controller.adminLogin);
 
 // User Feedback Summary
 router.post("/summarize-feedback", controller.summarizeUserFeedback);
+router.get("/user-feedbacks", controller.getAllUserFeedbacks);
 
 //disable user
 router.post("/disable-user/:uid", controller.disableUser);

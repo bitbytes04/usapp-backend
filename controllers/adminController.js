@@ -319,6 +319,22 @@ const enableUser = async (req, res) => {
     }
 };
 
+
+/**
+ * Get all user feedbacks from UserFeedbacks collection
+ */
+const getAllUserFeedbacks = async (req, res) => {
+    try {
+        const feedbackSnapshot = await db.collection('UserFeedbacks').orderBy('timestamp', 'desc').get();
+        const feedbacks = feedbackSnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
+        res.status(200).json({ success: true, feedbacks });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
 module.exports = {
     getActivityLogs,
     getActivityLogById,
@@ -328,5 +344,6 @@ module.exports = {
     adminLogin,
     summarizeUserFeedback,
     disableUser,
-    enableUser
+    enableUser,
+    getAllUserFeedbacks
 };
