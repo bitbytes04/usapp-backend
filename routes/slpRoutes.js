@@ -5,6 +5,8 @@ const controller = require("../controllers/slpController");
 
 router.get("/screen-time-summary/:uid", controller.getScreenTimeSummary);
 router.get("/board-usage-summary/:uid/", controller.getBoardUsageSummary);
+router.get("/:uid/linked-users", controller.getLinkedUsers);
+router.post("/link-request/:uid", controller.postLinkRequest);
 
 
 module.exports = router;

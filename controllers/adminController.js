@@ -1,5 +1,9 @@
 const { db, auth, storage } = require("../firebase/config");
+const { OpenAI } = require('openai');
 
+const openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+});
 // Check if auth is defined and throw an error if not
 
 
@@ -133,11 +137,108 @@ const getAllSLPUsers = async (req, res) => {
     }
 };
 
+
+const summarizeUserFeedback = async (req, res) => {
+    try {
+        // Fetch all feedback messages
+        const feedbackSnapshot = await db.collection('UserFeedback').get();
+        const messages = feedbackSnapshot.docs.map(doc => doc.data().message).filter(Boolean);
+
+        if (messages.length === 0) {
+            return res.status(200).json({ success: true, summary: "No feedback messages found." });
+        }
+
+        // Prepare prompt for GPT-4 mini
+        const prompt = `Summarize the following user feedback messages in a concise paragraph:\n\n${messages.map((msg, i) => `${i + 1}. ${msg}`).join('\n')}`;
+
+        // Call OpenAI API
+        const completion = await openai.chat.completions.create({
+            model: "gpt-4-1106-preview", // GPT-4 mini
+            messages: [
+                { role: "system", content: "You are a helpful assistant that summarizes user feedback for product improvement." },
+                { role: "user", content: prompt }
+            ],
+            max_tokens: 200,
+            temperature: 0.5
+        });
+
+        const summary = completion.choices[0].message.content.trim();
+
+        res.status(200).json({ success: true, summary });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+/**
+ * Disable a user by moving their data from Users to DisabledUsers collection
+ */
+const disableUser = async (req, res) => {
+    const { uid } = req.params;
+    try {
+        // Get user data from Users collection
+        const userDoc = await db.collection('Users').doc(uid).get();
+        if (!userDoc.exists) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+        const userData = userDoc.data();
+
+        // Add user data to DisabledUsers collection
+        await db.collection('DisabledUsers').doc(uid).set({
+            ...userData,
+            disabledAt: new Date()
+        });
+
+        // Delete user from Users collection
+        await db.collection('Users').doc(uid).delete();
+
+        // Disable user in Firebase Authentication
+        await auth.updateUser(uid, { disabled: true });
+
+        res.status(200).json({ success: true, message: 'User disabled successfully' });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+/**
+ * Enable a user by moving their data from DisabledUsers to Users collection
+ */
+const enableUser = async (req, res) => {
+    const { uid } = req.params;
+    try {
+        // Get user data from DisabledUsers collection
+        const disabledUserDoc = await db.collection('DisabledUsers').doc(uid).get();
+        if (!disabledUserDoc.exists) {
+            return res.status(404).json({ success: false, message: 'Disabled user not found' });
+        }
+        const userData = disabledUserDoc.data();
+
+        // Add user data back to Users collection
+        await db.collection('Users').doc(uid).set({
+            ...userData,
+            enabledAt: new Date()
+        });
+
+        // Delete user from DisabledUsers collection
+        await db.collection('DisabledUsers').doc(uid).delete();
+
+        // Enable user in Firebase Authentication
+        await auth.updateUser(uid, { disabled: false });
+
+        res.status(200).json({ success: true, message: 'User enabled successfully' });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
 module.exports = {
     getActivityLogs,
     getActivityLogById,
     getAllSLPUsers,
     createSpeechPathologist,
     getAllUsers,
-    adminLogin
+    adminLogin,
+    summarizeUserFeedback,
+    disableUser,
+    enableUser
 };

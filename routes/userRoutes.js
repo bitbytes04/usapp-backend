@@ -16,5 +16,8 @@ router.post("/:uid/boards", controller.addUserBoard);
 router.get("/:uid/userbuttons", controller.getUserButtons);
 router.post("/:uid/log-screen-time", controller.logScreenTime);
 router.post("/:uid/:boardId/log-board-usage", controller.logBoardUsage);
+router.post("/:uid/feedback", controller.postUserFeedback);
+router.get("/:uid/linkrequests", controller.getAllLinkRequests);
+router.post("/:uid/linkrequests/:requestId/approve/:slpId", controller.approveLinkRequest);
 
 module.exports = router;

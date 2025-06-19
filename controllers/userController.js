@@ -15,7 +15,9 @@ exports.createUser = async (req, res) => {
             age,
             boardPreference: "right", // default value
             preferredVoice: 0, // default value
-            preferredPitch: 1, // default value
+            preferredPitch: 1,
+            preferredSpeed: 1,
+            emotionToggle: "off" // default value
         };
 
         // Add endName and endAge if userType is "Guardian"
@@ -123,7 +125,26 @@ exports.getAllUserBoards = async (req, res) => {
     }
 };
 
+exports.postUserFeedback = async (req, res) => {
+    const { uid, message } = req.body;
 
+    if (!uid || !message) {
+        return res.status(400).send({ error: "uid and message are required" });
+    }
+
+    try {
+        await db.collection("UserFeedback").add({
+            uid,
+            message,
+            timestamp: new Date().toISOString(),
+        });
+
+        await logActivity(uid, "Posted user feedback");
+        res.status(201).send({ message: "User feedback posted" });
+    } catch (err) {
+        res.status(500).send({ error: err.message });
+    }
+};
 
 exports.getUserBoardById = async (req, res) => {
     try {
@@ -247,7 +268,9 @@ exports.editUser = async (req, res) => {
         endAge,
         boardPreference,
         preferredVoice,
-        preferredPitch
+        preferredPitch,
+        preferredSpeed,
+        emotionToggle
     } = req.body;
 
     try {
@@ -261,6 +284,9 @@ exports.editUser = async (req, res) => {
             boardPreference,
             preferredVoice,
             preferredPitch,
+            preferredSpeed,
+            emotionToggle
+
         };
 
         if (userType === "Guardian") {
@@ -407,6 +433,62 @@ exports.submitUserFeedback = async (req, res) => {
 
         await logActivity(uid, "Submitted feedback");
         res.status(201).send({ message: "Feedback submitted" });
+    } catch (err) {
+        res.status(500).send({ error: err.message });
+    }
+};
+
+exports.getAllLinkRequests = async (req, res) => {
+    try {
+        const { uid } = req.params;
+        const snapshot = await db
+            .collection("Users")
+            .doc(uid)
+            .collection("LinkRequests")
+            .get();
+
+        const requests = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        res.send(requests);
+    } catch (err) {
+        res.status(500).send({ error: err.message });
+    }
+};
+
+exports.approveLinkRequest = async (req, res) => {
+    const { uid, requestId, slpId } = req.params; // uid: the user receiving the request (the User), requestId: the LinkRequest doc ID
+
+    try {
+        // Get the link request document
+        const linkRequestRef = db
+            .collection("Users")
+            .doc(uid)
+            .collection("LinkRequests")
+            .doc(requestId);
+
+        const linkRequestDoc = await linkRequestRef.get();
+        if (!linkRequestDoc.exists) {
+            return res.status(404).send({ error: "Link request not found" });
+        }
+
+        const linkRequestData = linkRequestDoc.data();
+        if (linkRequestData.status === "approved") {
+            return res.status(400).send({ error: "Link request already approved" });
+        }
+
+        // Mark the request as approved
+        await linkRequestRef.update({ status: "approved", approvedAt: new Date() });
+
+        // Add the SLP to the User's LinkedSLPs subcollection
+        await db
+            .collection("SLPUsers")
+            .doc(slpId)
+            .collection("LinkedUsers")
+            .add({
+                linkedAt: new Date(),
+                userId: uid // Add the User's uid to the LinkedSLPs collection
+            });
+
+        res.send({ success: true, message: "Link request approved and SLP linked" });
     } catch (err) {
         res.status(500).send({ error: err.message });
     }
