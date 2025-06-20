@@ -235,10 +235,28 @@ const getAllUserFeedbacks = async (req, res) => {
 const getAllBoardLogs = async (req, res) => {
     try {
         const boardLogsSnapshot = await db.collection('BoardLogs').orderBy('timestamp', 'desc').get();
-        const boardLogs = boardLogsSnapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-        }));
+        // For each board log, fetch its ButtonPresses subcollection
+        const boardLogs = await Promise.all(
+            boardLogsSnapshot.docs.map(async doc => {
+                // Fetch ButtonPresses subcollection
+                const buttonPressesSnapshot = await db
+                    .collection('BoardLogs')
+                    .doc(doc.id)
+                    .collection('ButtonPresses')
+                    .get();
+
+                const buttonPresses = buttonPressesSnapshot.docs.map(bpDoc => ({
+                    id: bpDoc.id,
+                    ...bpDoc.data()
+                }));
+
+                return {
+                    id: doc.id,
+                    ...doc.data(),
+                    buttonPresses
+                };
+            })
+        );
         res.status(200).json({ success: true, boardLogs });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
