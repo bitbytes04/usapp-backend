@@ -199,7 +199,7 @@ const summarizeUserFeedback = async (req, res) => {
         const completion = await openai.chat.completions.create({
             model: "gpt-4.1-mini", // GPT-4 mini
             messages: [
-                { role: "system", content: "You are a helpful assistant that summarizes user feedback for product improvement." },
+                { role: "system", content: "You are a helpful assistant that summarizes user feedback for UsApp a Filipino AAC Communication Board" },
                 { role: "user", content: prompt }
             ],
             max_tokens: 200,
