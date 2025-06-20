@@ -186,7 +186,7 @@ const summarizeUserFeedback = async (req, res) => {
     try {
         // Fetch all feedback messages
         const feedbackSnapshot = await db.collection('UserFeedback').get();
-        const messages = feedbackSnapshot.docs.map(doc => doc.data().message).filter(Boolean);
+        const messages = feedbackSnapshot.docs.map(doc => doc.data().feedback).filter(Boolean);
 
         if (messages.length === 0) {
             return res.status(200).json({ success: true, summary: "No feedback messages found." });
@@ -197,7 +197,7 @@ const summarizeUserFeedback = async (req, res) => {
 
         // Call OpenAI API
         const completion = await openai.chat.completions.create({
-            model: "gpt-4-1106-preview", // GPT-4 mini
+            model: "gpt-4.1-mini", // GPT-4 mini
             messages: [
                 { role: "system", content: "You are a helpful assistant that summarizes user feedback for product improvement." },
                 { role: "user", content: prompt }
@@ -209,6 +209,21 @@ const summarizeUserFeedback = async (req, res) => {
         const summary = completion.choices[0].message.content.trim();
 
         res.status(200).json({ success: true, summary });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+/**
+ * Get all user feedbacks from UserFeedbacks collection
+ */
+const getAllUserFeedbacks = async (req, res) => {
+    try {
+        const feedbackSnapshot = await db.collection('UserFeedbacks').orderBy('timestamp', 'desc').get();
+        const feedbacks = feedbackSnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
+        res.status(200).json({ success: true, feedbacks });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
@@ -320,21 +335,6 @@ const enableUser = async (req, res) => {
 };
 
 
-/**
- * Get all user feedbacks from UserFeedbacks collection
- */
-const getAllUserFeedbacks = async (req, res) => {
-    try {
-        const feedbackSnapshot = await db.collection('UserFeedbacks').orderBy('timestamp', 'desc').get();
-        const feedbacks = feedbackSnapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-        }));
-        res.status(200).json({ success: true, feedbacks });
-    } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
-    }
-};
 module.exports = {
     getActivityLogs,
     getActivityLogById,
