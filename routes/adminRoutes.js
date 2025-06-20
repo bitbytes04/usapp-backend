@@ -6,6 +6,7 @@ const controller = require("../controllers/adminController");
 // Activity Logs
 router.get("/activity-logs", controller.getActivityLogs);
 router.get("/activity-logs/:id", controller.getActivityLogById);
+router.get("/board-logs", controller.getAllBoardLogs);
 
 // Speech Pathologist
 router.post("/slp", controller.createSpeechPathologist);

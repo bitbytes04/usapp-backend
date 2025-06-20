@@ -230,6 +230,22 @@ const getAllUserFeedbacks = async (req, res) => {
 };
 
 /**
+ * Get all board logs from BoardLogs collection
+ */
+const getAllBoardLogs = async (req, res) => {
+    try {
+        const boardLogsSnapshot = await db.collection('BoardLogs').orderBy('timestamp', 'desc').get();
+        const boardLogs = boardLogsSnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
+        res.status(200).json({ success: true, boardLogs });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+/**
  * Disable a user by moving their data from Users to DisabledUsers collection
  */
 const disableUser = async (req, res) => {
@@ -345,5 +361,6 @@ module.exports = {
     summarizeUserFeedback,
     disableUser,
     enableUser,
-    getAllUserFeedbacks
+    getAllUserFeedbacks,
+    getAllBoardLogs
 };
