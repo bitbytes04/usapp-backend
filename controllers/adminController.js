@@ -185,7 +185,7 @@ const getAllSLPUsers = async (req, res) => {
 const summarizeUserFeedback = async (req, res) => {
     try {
         // Fetch all feedback messages
-        const feedbackSnapshot = await db.collection('UserFeedback').get();
+        const feedbackSnapshot = await db.collection('UserFeedbacks').get();
         const messages = feedbackSnapshot.docs.map(doc => doc.data().feedback).filter(Boolean);
 
         if (messages.length === 0) {
