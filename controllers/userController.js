@@ -374,9 +374,10 @@ exports.getUserButtons = async (req, res) => {
         if (snapshot.empty) {
             return res.send([]);
         }
-
-        const buttons = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        res.send(buttons);
+        else {
+            const buttons = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            res.send(buttons);
+        }
     } catch (err) {
         res.status(500).send({ error: err.message });
     }
