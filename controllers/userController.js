@@ -363,11 +363,17 @@ exports.editUserBoard = async (req, res) => {
 
 exports.getUserButtons = async (req, res) => {
     try {
-        const snapshot = await db
+        const userButtonsRef = db
             .collection("Users")
             .doc(req.params.uid)
-            .collection("UserButtons")
-            .get();
+            .collection("UserButtons");
+
+        const snapshot = await userButtonsRef.get();
+
+        // If the collection does not exist or has no documents, return an empty array
+        if (snapshot.empty) {
+            return res.send([]);
+        }
 
         const buttons = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         res.send(buttons);
