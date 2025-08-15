@@ -1,4 +1,5 @@
-const { db } = require("../firebase/config");
+const { db, storage } = require("../firebase/config");
+
 
 exports.addDefaultButton = async (req, res) => {
     const buttons = req.body.buttons; // Expecting an array of button objects
@@ -26,6 +27,9 @@ exports.addDefaultButton = async (req, res) => {
         res.status(500).send({ error: err.message });
     }
 };
+
+
+
 
 exports.createDefaultBoard = async (req, res) => {
     try {
