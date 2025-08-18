@@ -243,3 +243,24 @@ exports.editSLPUser = async (req, res) => {
         res.status(500).send({ error: err.message });
     }
 };
+
+
+exports.getSLPUser = async (req, res) => {
+    const { uid } = req.params;
+
+    if (!uid) {
+        return res.status(400).send({ error: "uid is required" });
+    }
+
+    try {
+        const slpUserDoc = await db.collection("SLPUsers").doc(uid).get();
+
+        if (!slpUserDoc.exists) {
+            return res.status(404).send({ error: "SLP user not found" });
+        }
+
+        res.send({ userId: uid, ...slpUserDoc.data() });
+    } catch (err) {
+        res.status(500).send({ error: err.message });
+    }
+};
