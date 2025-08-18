@@ -10,6 +10,7 @@ router.get("/:uid/:boardId/getboard", controller.getUserBoardById);
 router.post("/:uid/edituser", controller.editUser);
 router.post("/:uid/:boardId/editboard", controller.editUserBoard);
 router.post("/:uid/addbutton", controller.addUserButton);
+router.post("/:uid/:buttonId/editbutton", controller.editUserButton);
 router.post("/:uid/:buttonId/deletebutton", controller.deleteUserButton);
 router.post("/:uid/:boardId/deleteboard", controller.deleteUserBoard);
 router.post("/:uid/boards", controller.addUserBoard);

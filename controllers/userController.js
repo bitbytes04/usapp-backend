@@ -361,6 +361,32 @@ exports.editUserBoard = async (req, res) => {
     }
 };
 
+exports.editUserButton = async (req, res) => {
+    const { buttonName, buttonCategory } = req.body;
+    const { uid, buttonId } = req.params;
+
+    if (!buttonName || !buttonCategory) {
+        return res.status(400).send({ error: "buttonName and buttonCategory are required" });
+    }
+
+    try {
+        await db
+            .collection("Users")
+            .doc(uid)
+            .collection("UserButtons")
+            .doc(buttonId)
+            .update({
+                buttonName,
+                buttonCategory,
+            });
+
+        await logActivity(uid, "Edited user button", buttonName);
+        res.status(200).send({ message: "User button updated" });
+    } catch (err) {
+        res.status(400).send({ error: err.message });
+    }
+};
+
 exports.getUserButtons = async (req, res) => {
     try {
         const userButtonsRef = db
