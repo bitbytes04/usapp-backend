@@ -73,7 +73,7 @@ exports.getBoardUsageSummary = async (req, res) => {
  * Includes the SLP's display name in the request.
  */
 exports.postLinkRequest = async (req, res) => {
-    const { uid } = req.params; // The user who is sending the request
+    const { uid } = req.params; // The SLP user sending the request
     const { targetEmail } = req.body; // The email of the user to link to
 
     if (!targetEmail) {
@@ -81,18 +81,27 @@ exports.postLinkRequest = async (req, res) => {
     }
 
     try {
-        // Find the user with the given email
-        const userSnapshot = await db.collection("Users")
-            .where("email", "==", targetEmail)
+        // Use Firebase Auth to get the target user's UID by email
+        let targetUserRecord;
+        try {
+            targetUserRecord = await auth.getUserByEmail(targetEmail);
+        } catch (err) {
+            return res.status(404).send({ error: "Target user not found" });
+        }
+        const targetUserId = targetUserRecord.uid;
+
+        // Check if targetUserId is already in SLP's LinkedUsers
+        const linkedUsersSnapshot = await db
+            .collection("SLPUsers")
+            .doc(uid)
+            .collection("LinkedUsers")
+            .where("userId", "==", targetUserId)
             .limit(1)
             .get();
 
-        if (userSnapshot.empty) {
-            return res.status(404).send({ error: "Target user not found" });
+        if (!linkedUsersSnapshot.empty) {
+            return res.status(409).send({ error: "User is already linked" });
         }
-
-        const targetUserDoc = userSnapshot.docs[0];
-        const targetUserId = targetUserDoc.id;
 
         // Check if a pending request already exists
         const existingReqSnapshot = await db.collection("Users")
