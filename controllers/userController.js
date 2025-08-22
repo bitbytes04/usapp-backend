@@ -61,13 +61,14 @@ exports.getActivityLogs = async (req, res) => {
 };
 
 exports.addUserButton = async (req, res) => {
-    const { buttonName, buttonImagePath, buttonCategory } = req.body;
+    const { buttonName, buttonImagePath, buttonCategory, buttonImageRef } = req.body;
 
     try {
         const ref = await db.collection("Users").doc(req.params.uid).collection("UserButtons").add({
             buttonName,
             buttonImagePath,
             buttonCategory,
+            buttonImageRef
         });
 
         await logActivity(req.params.uid, "Added user button", buttonName);
@@ -247,18 +248,13 @@ exports.deleteUserButton = async (req, res) => {
 
         if (buttonDoc.exists) {
             const buttonData = buttonDoc.data();
-            if (buttonData.buttonImagePath) {
-                // Extract storage path from download URL
-                const url = new URL(buttonData.buttonImagePath);
-                const pathMatch = url.pathname.match(/\/o\/(.+?)$/);
-                if (pathMatch && pathMatch[1]) {
-                    const storagePath = decodeURIComponent(pathMatch[1]);
-                    await storage.bucket().file(storagePath).delete().catch(() => { });
-                }
+            if (buttonData.buttonImageRef) {
+                // buttonImageRef is the storage path
+                await storage.bucket().file(buttonData.buttonImageRef).delete().catch(() => { });
             }
         }
     } catch (error) {
-
+        // Ignore errors from image deletion
     }
     try {
         await db
@@ -362,23 +358,45 @@ exports.editUserBoard = async (req, res) => {
 };
 
 exports.editUserButton = async (req, res) => {
-    const { buttonName, buttonCategory } = req.body;
+    const { buttonName, buttonCategory, buttonImagePath, buttonImageRef } = req.body;
     const { uid, buttonId } = req.params;
 
     if (!buttonName || !buttonCategory) {
         return res.status(400).send({ error: "buttonName and buttonCategory are required" });
     }
 
+    // Build update object based on provided fields
+    const updateData = {
+        buttonName,
+        buttonCategory,
+    };
+    if (buttonImagePath !== undefined) updateData.buttonImagePath = buttonImagePath;
+    if (buttonImageRef !== undefined) updateData.buttonImageRef = buttonImageRef;
+
     try {
+        // If new imagePath and imageRef are provided, delete the old photo
+        if (buttonImagePath !== undefined && buttonImageRef !== undefined) {
+            const buttonDoc = await db
+                .collection("Users")
+                .doc(uid)
+                .collection("UserButtons")
+                .doc(buttonId)
+                .get();
+
+            if (buttonDoc.exists) {
+                const oldData = buttonDoc.data();
+                if (oldData.buttonImageRef && oldData.buttonImageRef !== buttonImageRef) {
+                    await storage.bucket().file(oldData.buttonImageRef).delete().catch(() => { });
+                }
+            }
+        }
+
         await db
             .collection("Users")
             .doc(uid)
             .collection("UserButtons")
             .doc(buttonId)
-            .update({
-                buttonName,
-                buttonCategory,
-            });
+            .update(updateData);
 
         await logActivity(uid, "Edited user button", buttonName);
         res.status(200).send({ message: "User button updated" });
