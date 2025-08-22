@@ -86,18 +86,26 @@ exports.editDefaultButton = async (req, res) => {
 
         const oldData = doc.data();
 
-        // If buttonImageRef is changed, delete the old image
-        if (buttonImageRef && oldData.buttonImageRef && buttonImageRef !== oldData.buttonImageRef) {
-            const file = storage.bucket().file(oldData.buttonImageRef);
-            await file.delete().catch(() => { });
+        // Prepare update object
+        const updateData = {
+            buttonName,
+            buttonCategory,
+        };
+
+        // Only update image fields if provided
+        if (buttonImagePath !== undefined) {
+            updateData.buttonImagePath = buttonImagePath;
+        }
+        if (buttonImageRef !== undefined) {
+            // If buttonImageRef is changed, delete the old image
+            if (oldData.buttonImageRef && buttonImageRef !== oldData.buttonImageRef) {
+                const file = storage.bucket().file(oldData.buttonImageRef);
+                await file.delete().catch(() => { });
+            }
+            updateData.buttonImageRef = buttonImageRef;
         }
 
-        await docRef.update({
-            buttonName,
-            buttonImagePath,
-            buttonCategory,
-            buttonImageRef,
-        });
+        await docRef.update(updateData);
 
         res.status(200).send({ message: "Button updated" });
     } catch (err) {
