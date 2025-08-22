@@ -29,6 +29,82 @@ exports.addDefaultButton = async (req, res) => {
 };
 
 
+exports.addSingleDefaultButton = async (req, res) => {
+    const { buttonName, buttonImagePath, buttonCategory, buttonImageRef } = req.body;
+
+    try {
+        const ref = await db.collection("DefaultButtons").add({
+            buttonName,
+            buttonImagePath,
+            buttonCategory,
+            buttonImageRef,
+        });
+
+        res.status(201).send({ message: "Default button added", id: ref.id, buttonName });
+    } catch (err) {
+        res.status(500).send({ error: err.message });
+    }
+};
+
+exports.deleteDefaultButton = async (req, res) => {
+    const { buttonId } = req.params;
+
+    try {
+        const docRef = db.collection("DefaultButtons").doc(buttonId);
+        const doc = await docRef.get();
+
+        if (!doc.exists) {
+            return res.status(404).send({ error: "Button not found" });
+        }
+
+        const { buttonImageRef } = doc.data();
+
+        if (buttonImageRef) {
+            const file = storage.bucket().file(buttonImageRef);
+            await file.delete().catch(() => { });
+        }
+
+        await docRef.delete();
+
+        res.status(200).send({ message: "Button deleted" });
+    } catch (err) {
+        res.status(500).send({ error: err.message });
+    }
+};
+
+exports.editDefaultButton = async (req, res) => {
+    const { buttonId } = req.params;
+    const { buttonName, buttonImagePath, buttonCategory, buttonImageRef } = req.body;
+
+    try {
+        const docRef = db.collection("DefaultButtons").doc(buttonId);
+        const doc = await docRef.get();
+
+        if (!doc.exists) {
+            return res.status(404).send({ error: "Button not found" });
+        }
+
+        const oldData = doc.data();
+
+        // If buttonImageRef is changed, delete the old image
+        if (buttonImageRef && oldData.buttonImageRef && buttonImageRef !== oldData.buttonImageRef) {
+            const file = storage.bucket().file(oldData.buttonImageRef);
+            await file.delete().catch(() => { });
+        }
+
+        await docRef.update({
+            buttonName,
+            buttonImagePath,
+            buttonCategory,
+            buttonImageRef,
+        });
+
+        res.status(200).send({ message: "Button updated" });
+    } catch (err) {
+        res.status(500).send({ error: err.message });
+    }
+};
+
 
 
 exports.createDefaultBoard = async (req, res) => {
