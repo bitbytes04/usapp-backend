@@ -62,7 +62,7 @@ exports.deleteDefaultButton = async (req, res) => {
         if (buttonImageRef) {
             // Remove leading/trailing quotes if present
             const imagePath = buttonImageRef.replace(/^"+|"+$/g, "");
-            const file = storage.bucket().file(imagePath);
+            const file = storage.file(imagePath);
             await file.delete().catch(() => { });
         }
 
@@ -103,7 +103,7 @@ exports.editDefaultButton = async (req, res) => {
             if (oldData.buttonImageRef && buttonImageRef !== oldData.buttonImageRef) {
                 // Remove trailing quote if present
                 const oldImagePath = oldData.buttonImageRef.replace(/^"+|"+$/g, "");
-                const file = storage.bucket().file(oldImagePath);
+                const file = storage.file(oldImagePath);
                 await file.delete().catch(() => { });
             }
             updateData.buttonImageRef = buttonImageRef;
