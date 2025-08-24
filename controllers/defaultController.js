@@ -68,7 +68,7 @@ exports.deleteDefaultButton = async (req, res) => {
 
         res.status(200).send({ message: "Button deleted" });
     } catch (err) {
-        res.status(500).send({ error: err.message });
+        res.status(500).send({ error: err });
     }
 };
 
