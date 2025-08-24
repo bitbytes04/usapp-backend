@@ -60,7 +60,9 @@ exports.deleteDefaultButton = async (req, res) => {
         const { buttonImageRef } = doc.data();
 
         if (buttonImageRef) {
-            const file = storage.bucket().file(buttonImageRef);
+            // Remove leading/trailing quotes if present
+            const imagePath = buttonImageRef.replace(/^"+|"+$/g, "");
+            const file = storage.bucket().file(imagePath);
             await file.delete().catch(() => { });
         }
 
@@ -68,7 +70,7 @@ exports.deleteDefaultButton = async (req, res) => {
 
         res.status(200).send({ message: "Button deleted" });
     } catch (err) {
-        res.status(500).send({ error: err });
+        res.status(500).send({ error: err.message });
     }
 };
 
