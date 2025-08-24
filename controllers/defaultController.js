@@ -101,7 +101,9 @@ exports.editDefaultButton = async (req, res) => {
         if (buttonImageRef !== undefined) {
             // If buttonImageRef is changed, delete the old image
             if (oldData.buttonImageRef && buttonImageRef !== oldData.buttonImageRef) {
-                const file = storage.bucket().file(oldData.buttonImageRef);
+                // Remove trailing quote if present
+                const oldImagePath = oldData.buttonImageRef.replace(/^"+|"+$/g, "");
+                const file = storage.bucket().file(oldImagePath);
                 await file.delete().catch(() => { });
             }
             updateData.buttonImageRef = buttonImageRef;
