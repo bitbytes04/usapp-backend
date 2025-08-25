@@ -229,11 +229,9 @@ exports.deleteUserBoard = async (req, res) => {
 
         const res = await boardRef.delete();
 
-
-        await logActivity(uid, "Deleted user board");
         res.status(200).send({ res });
     } catch (err) {
-        res.status(500).send({ error: err.message });
+        res.status(500).send({ error: err });
     }
 };
 
