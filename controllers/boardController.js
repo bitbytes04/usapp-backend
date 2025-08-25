@@ -18,8 +18,8 @@ exports.activateTextToSpeech = async (req, res) => {
             "effectsProfileId": [
                 "small-bluetooth-speaker-class-device"
             ],
-            "pitch": (0.5 + (pitch * 3) + (voice == 2 ? 25 : 0)),
-            "speakingRate": (speed ? (1 + (speed * 0.2)) : 1)
+            "pitch": (0.5 + (pitch * 0.5)),
+            "speakingRate": (speed ? (0.5 + (speed * 0.5)) : 1)
         },
         "input": {
             "text": text
