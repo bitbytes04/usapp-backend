@@ -380,7 +380,7 @@ const generateWrittenReport = async (req, res) => {
         }
 
         // Prepare prompt for GPT-4 mini
-        const prompt = `Generate a detailed written report based on the following data:\n\n${data}`;
+        const prompt = `Generate a detailed written analysis based on the following data keep it in paragraph form and make inferences about the data:\n\n${data}`;
 
         // Call OpenAI API
         const completion = await openai.chat.completions.create({
