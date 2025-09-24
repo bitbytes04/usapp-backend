@@ -273,3 +273,91 @@ exports.getSLPUser = async (req, res) => {
         res.status(500).send({ error: err.message });
     }
 };
+
+
+exports.postRemark = async (req, res) => {
+    const { uid, targetUserId } = req.params; // SLP UID and target user UID
+    const { remark, title } = req.body;
+
+    if (!remark) {
+        return res.status(400).send({ error: "remark is required" });
+    }
+    if (!title) {
+        return res.status(400).send({ error: "title is required" });
+    }
+
+    try {
+        await db
+            .collection("SLPUsers")
+            .doc(uid)
+            .collection("LinkedUsers")
+            .doc(targetUserId)
+            .collection("Remarks")
+            .add({
+                slpUserId: uid,
+                remark,
+                title,
+                createdAt: new Date().toISOString()
+            });
+
+        res.send({ success: true, message: "Remark posted" });
+    } catch (err) {
+        res.status(500).send({ error: err.message });
+    }
+};
+
+
+exports.getRemarks = async (req, res) => {
+    const { uid, targetUserId } = req.params;
+
+    try {
+        const remarksSnapshot = await db
+            .collection("SLPUsers")
+            .doc(uid)
+            .collection("LinkedUsers")
+            .doc(targetUserId)
+            .collection("Remarks")
+            .orderBy("createdAt", "desc")
+            .get();
+
+        const remarks = remarksSnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
+
+        res.send({ userId: targetUserId, remarks });
+    } catch (err) {
+        res.status(500).send({ error: err.message });
+    }
+};
+
+
+exports.deleteRemark = async (req, res) => {
+    const { uid, targetUserId, remarkId } = req.params;
+
+    if (!remarkId) {
+        return res.status(400).send({ error: "remarkId is required" });
+    }
+
+    try {
+        const remarkRef = db
+            .collection("SLPUsers")
+            .doc(uid)
+            .collection("LinkedUsers")
+            .doc(targetUserId)
+            .collection("Remarks")
+            .doc(remarkId);
+
+        const remarkDoc = await remarkRef.get();
+
+        if (!remarkDoc.exists || remarkDoc.data().slpUserId !== uid) {
+            return res.status(404).send({ error: "Remark not found or not authorized" });
+        }
+
+        await remarkRef.delete();
+
+        res.send({ success: true, message: "Remark deleted" });
+    } catch (err) {
+        res.status(500).send({ error: err.message });
+    }
+};

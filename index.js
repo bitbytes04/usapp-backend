@@ -11,17 +11,15 @@ const allowedFrameAncestors = ['https://usapp-aac.org'];
 const app = express();
 
 app.use(cors());
-
 app.use(helmet.referrerPolicy({ policy: 'no-referrer' }));
-
 app.use(
     helmet({
         contentSecurityPolicy: {
             directives: {
-                frameAncestors: ["'self'", ...allowedFrameAncestors], // Allow framing from own origin and specified URLs
+                frameAncestors: ["'self'", ...allowedFrameAncestors],
             },
         },
-        xFrameOptions: false, // Disable the deprecated X-Frame-Options header since Content-Security-Policy is used
+        xFrameOptions: false,
     })
 );
 app.use(express.json());

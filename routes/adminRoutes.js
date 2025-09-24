@@ -23,4 +23,9 @@ router.post("/disable-user/:uid", controller.disableUser);
 
 // Enable user
 router.post("/enable-user/:uid", controller.enableUser);
+
+
+// Generate Written Report
+router.post("/generate-written-report", controller.generateWrittenReport);
+
 module.exports = router;

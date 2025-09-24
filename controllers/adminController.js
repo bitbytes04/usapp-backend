@@ -368,6 +368,39 @@ const enableUser = async (req, res) => {
     }
 };
 
+/**
+ * Generate a written report using GPT-4 mini based on provided data
+ * Expects req.body.data to be a string describing the data
+ */
+const generateWrittenReport = async (req, res) => {
+    try {
+        const { data } = req.body;
+        if (!data || typeof data !== 'string' || data.trim() === '') {
+            return res.status(400).json({ success: false, message: "No valid string data provided for report generation." });
+        }
+
+        // Prepare prompt for GPT-4 mini
+        const prompt = `Generate a detailed written report based on the following data:\n\n${data}`;
+
+        // Call OpenAI API
+        const completion = await openai.chat.completions.create({
+            model: "gpt-4.1-mini",
+            messages: [
+                { role: "system", content: "You are a speech language pathologist assistant analyzing usage data of a Filipino Tagalog AAC App." },
+                { role: "user", content: prompt }
+            ],
+            max_tokens: 500,
+            temperature: 0.5
+        });
+
+        const report = completion.choices[0].message.content.trim();
+
+        res.status(200).json({ success: true, report });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
 
 module.exports = {
     getActivityLogs,
@@ -380,5 +413,6 @@ module.exports = {
     disableUser,
     enableUser,
     getAllUserFeedbacks,
-    getAllBoardLogs
+    getAllBoardLogs,
+    generateWrittenReport
 };
