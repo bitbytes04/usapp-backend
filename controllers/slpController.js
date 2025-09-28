@@ -40,28 +40,14 @@ exports.getBoardUsageSummary = async (req, res) => {
             .where("userId", "==", uid)
             .get();
 
-        const buttonTotals = {};
-
-        // For each log, sum up button presses from subcollection
-        const logPromises = [];
-        logsSnapshot.forEach(logDoc => {
-            const btnPressesRef = logDoc.ref.collection("ButtonPresses");
-            logPromises.push(
-                btnPressesRef.get().then(btnSnapshot => {
-                    btnSnapshot.forEach(btnDoc => {
-                        const { buttonId, count } = btnDoc.data();
-                        if (!buttonTotals[buttonId]) buttonTotals[buttonId] = 0;
-                        buttonTotals[buttonId] += Number(count) || 0;
-                    });
-                })
-            );
-        });
-
-        await Promise.all(logPromises);
+        const boardLogs = logsSnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
 
         res.send({
             userId: uid,
-            buttonTotals
+            boardLogs
         });
     } catch (err) {
         res.status(500).send({ error: err.message });
