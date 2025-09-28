@@ -38,12 +38,30 @@ exports.getBoardUsageSummary = async (req, res) => {
     try {
         const logsSnapshot = await db.collection("BoardLogs")
             .where("userId", "==", uid)
+            .orderBy("timestamp", "desc")
             .get();
 
-        const boardLogs = logsSnapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-        }));
+        // For each board log, fetch its ButtonPresses subcollection
+        const boardLogs = await Promise.all(
+            logsSnapshot.docs.map(async doc => {
+                const buttonPressesSnapshot = await db
+                    .collection("BoardLogs")
+                    .doc(doc.id)
+                    .collection("ButtonPresses")
+                    .get();
+
+                const buttonPresses = buttonPressesSnapshot.docs.map(bpDoc => ({
+                    id: bpDoc.id,
+                    ...bpDoc.data()
+                }));
+
+                return {
+                    id: doc.id,
+                    ...doc.data(),
+                    buttonPresses
+                };
+            })
+        );
 
         res.send({
             userId: uid,
