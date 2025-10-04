@@ -48,6 +48,9 @@ const adminLogin = async (req, res) => {
         // Hardcoded admin credentials
         if (email === "bitbytes.dev@gmail.com" && password === "@Starbucks2024") {
             res.status(200).json({ success: true, message: 'Admin login successful', uid: 'Xbj293nhu394n4ud' });
+        }
+        else if (email === "bloomingtrailblazers@slp-admin.com" && password === "UsApp@2025") {
+            res.status(200).json({ success: true, message: 'Admin login successful', uid: 'Xbj293nhu394n4ud' });
         } else {
             res.status(401).json({ success: false, message: 'Invalid credentials' });
         }
